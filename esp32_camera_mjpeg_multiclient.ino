@@ -204,7 +204,8 @@ void camCB(void* pvParameters) {
     //  there is no need to grab frames from the camera. We can save some juice
     //  by suspedning the tasks
     if ( eTaskGetState( tStream ) == eSuspended ) {
-      vTaskSuspend(NULL);  // passing NULL means "suspend yourself"
+      //By commenting this out, we never suspend frame grabs for freshies
+      //vTaskSuspend(NULL);  // passing NULL means "suspend yourself"
     }
   }
 }
@@ -359,6 +360,10 @@ void handleJPG(void)
   WiFiClient client = server.client();
 
   if (!client.connected()) return;
+
+  // Wake up streaming tasks, if they were previously suspended:
+  if ( eTaskGetState( tCam ) == eSuspended ) vTaskResume( tCam );
+  if ( eTaskGetState( tStream ) == eSuspended ) vTaskResume( tStream );
 
   xSemaphoreTake( frameSync, portMAX_DELAY );
   client.write(JHEADER, jhdLen);
